@@ -11,6 +11,7 @@ interface StudioHeaderProps {
   onOpenImport: () => void;
   onOpenMakeItFire: () => void;
   onOpenExport: () => void;
+  onOpenModelOrchestrator: () => void;
   hasUnsavedChanges: boolean;
 }
 
@@ -23,6 +24,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   onOpenImport,
   onOpenMakeItFire,
   onOpenExport,
+  onOpenModelOrchestrator,
   hasUnsavedChanges,
 }) => {
   const [commandText, setCommandText] = useState('');
@@ -150,7 +152,20 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
       </div>
 
       {/* Right: Mode Switcher & Primary Actions */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
+        {/* Model Orchestrator Trigger Button */}
+        <button
+          onClick={() => {
+            sounds.playSelect();
+            onOpenModelOrchestrator();
+          }}
+          title="Open AI Model Orchestrator (SAM-2, Whisper Turbo, Demucs v4, Depth Anything)"
+          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-950/70 border border-purple-600/60 text-purple-200 hover:bg-purple-900/60 text-xs font-medium cursor-pointer transition-all shadow-sm"
+        >
+          <span className="text-purple-400">⚡</span>
+          <span>Models: <strong className="font-mono text-white">{projectSettings.activeModelProfile || 'AUTO'}</strong></span>
+        </button>
+
         {/* User Mode Switcher (Section 4 of PRD) */}
         <div className="hidden xl:flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
           {(['QUICK', 'EDIT', 'PRO'] as UserMode[]).map((mode) => (

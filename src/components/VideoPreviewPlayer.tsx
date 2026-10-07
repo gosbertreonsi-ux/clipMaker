@@ -12,6 +12,8 @@ interface VideoPreviewPlayerProps {
   onTogglePlay: () => void;
   aspectRatio: '16:9' | '9:16' | '1:1' | '4:5';
   onChangeAspectRatio: (ratio: '16:9' | '9:16' | '1:1' | '4:5') => void;
+  captions?: import('../types').CaptionItem[];
+  activeCaptionStyle?: import('../types').CaptionPreset;
 }
 
 export const VideoPreviewPlayer: React.FC<VideoPreviewPlayerProps> = ({
@@ -24,6 +26,8 @@ export const VideoPreviewPlayer: React.FC<VideoPreviewPlayerProps> = ({
   onTogglePlay,
   aspectRatio,
   onChangeAspectRatio,
+  captions = [],
+  activeCaptionStyle = 'HORMOZI_BOLD',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoElemRef = useRef<HTMLVideoElement | null>(null);
@@ -130,18 +134,88 @@ export const VideoPreviewPlayer: React.FC<VideoPreviewPlayerProps> = ({
         ctx.fillRect(0, 0, width, height);
       }
 
-      // Render Active Text / Captions
-      if (activeTextClip) {
+      // Render Animated Word-by-Word Captions (Section 27 of PRD - Better than CapCut)
+      const currentCaption = captions.find(
+        (c) => currentTime >= c.startTime && currentTime <= c.endTime
+      );
+
+      if (currentCaption) {
+        ctx.save();
+        const fontSize = aspectRatio === '9:16' ? 26 : 22;
+        ctx.font = `900 ${fontSize}px system-ui, -apple-system, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Measure total width to space words
+        const words = currentCaption.words;
+        const totalWords = words.length;
+        const wordSpacings = words.map((w) => ctx.measureText(w.word).width + 10);
+        const totalWidth = wordSpacings.reduce((a, b) => a + b, 0);
+        let startX = (width - totalWidth) / 2;
+        const posY = height * 0.76;
+
+        words.forEach((w, idx) => {
+          const isWordActive = currentTime >= w.start && currentTime <= w.end;
+          const wordWidth = wordSpacings[idx] - 10;
+          const wordCenterX = startX + wordWidth / 2;
+
+          ctx.save();
+          if (isWordActive) {
+            if (activeCaptionStyle === 'HORMOZI_BOLD') {
+              // Hormozi Style: Vibrant yellow/lime highlight pill box behind active word
+              ctx.fillStyle = '#facc15';
+              ctx.beginPath();
+              ctx.roundRect(startX - 4, posY - fontSize / 2 - 3, wordWidth + 8, fontSize + 6, 4);
+              ctx.fill();
+
+              // Word text in black
+              ctx.fillStyle = '#000000';
+              ctx.fillText(w.word, wordCenterX, posY);
+            } else if (activeCaptionStyle === 'POP_KARAOKE') {
+              // Pop Bounce Karaoke: Pop scale 1.25x
+              ctx.translate(wordCenterX, posY);
+              ctx.scale(1.22, 1.22);
+              ctx.translate(-wordCenterX, -posY);
+
+              ctx.lineWidth = 4;
+              ctx.strokeStyle = '#000000';
+              ctx.strokeText(w.word, wordCenterX, posY);
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillText(w.word, wordCenterX, posY);
+            } else if (activeCaptionStyle === 'NEON_PULSE') {
+              // Cyberpunk Neon Pulse
+              ctx.shadowColor = '#38bdf8';
+              ctx.shadowBlur = 15;
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillText(w.word, wordCenterX, posY);
+            } else {
+              // Cinematic Sub
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(w.word, wordCenterX, posY);
+            }
+          } else {
+            // Inactive word text
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#000000';
+            ctx.strokeText(w.word, wordCenterX, posY);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(w.word, wordCenterX, posY);
+          }
+          ctx.restore();
+
+          startX += wordSpacings[idx];
+        });
+
+        ctx.restore();
+      } else if (activeTextClip) {
+        // Fallback title clip rendering
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
-        // Text styling (TikTok-style bold outline)
         ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#000000';
         ctx.strokeText(activeTextClip.title, width / 2, height * 0.78);
-        
         ctx.fillStyle = '#fde047';
         ctx.fillText(activeTextClip.title, width / 2, height * 0.78);
         ctx.restore();

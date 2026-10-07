@@ -1,4 +1,157 @@
-import { TimelineClip, AudioTrack, ColorGradeSettings } from '../types';
+import { TimelineClip, AudioTrack, ColorGradeSettings, AIModel, CaptionItem, RepurposeCard } from '../types';
+
+export const AI_MODELS_REGISTRY: AIModel[] = [
+  {
+    id: 'sam-2',
+    name: 'SAM 2.1 (Segment Anything)',
+    version: 'v2.1 Large',
+    category: 'vision',
+    specialty: '1-Click Zero-GreenScreen Background Removal & Masking',
+    benchmarkScore: 99.2,
+    latencyMs: 140,
+    status: 'active',
+    description: 'Ultra-fast sub-pixel subject isolation and video rotoscoping across temporal frames.',
+  },
+  {
+    id: 'demucs-v4',
+    name: 'HT-Demucs Neural Stems',
+    version: 'v4.0 Pro',
+    category: 'audio',
+    specialty: '4-Stem Studio Audio Separation (Vocals / Drums / Bass / Melody)',
+    benchmarkScore: 98.7,
+    latencyMs: 220,
+    status: 'active',
+    description: 'Isolates isolated vocal tracks and basslines for surgical beat-matched video cuts.',
+  },
+  {
+    id: 'whisper-v3',
+    name: 'OpenAI Whisper Turbo',
+    version: 'v3.2 Large',
+    category: 'audio',
+    specialty: 'Word-Level Timestamp Auto-Captions in 98 Languages',
+    benchmarkScore: 99.4,
+    latencyMs: 85,
+    status: 'active',
+    description: 'Generates animated viral TikTok captions with synchronized karaoke word highlight.',
+  },
+  {
+    id: 'depth-anything-v2',
+    name: 'Depth Anything v2',
+    version: 'v2.0 Metric',
+    category: 'vision',
+    specialty: 'Monocular 3D Depth Map & Cinematic Relighting',
+    benchmarkScore: 97.9,
+    latencyMs: 110,
+    status: 'active',
+    description: 'Creates true parallax depth layers and places 3D text behind actors without greenscreen.',
+  },
+  {
+    id: 'gemini-orchestrator',
+    name: 'Gemini 2.5 Pro Vision',
+    version: 'v2.5 Flash/Pro',
+    category: 'orchestration',
+    specialty: 'Creative Director: Story, Rhythm, Pacing & Hook Synthesis',
+    benchmarkScore: 99.8,
+    latencyMs: 95,
+    status: 'active',
+    description: 'Analyzes visual energy, musical downbeats, and viewer retention curves to direct the cut.',
+  },
+  {
+    id: 'rife-v4',
+    name: 'RIFE Flow Interpolation',
+    version: 'v4.16 HD',
+    category: 'video',
+    specialty: 'AI 120 FPS Ultra Slow-Motion & Speed Ramps',
+    benchmarkScore: 98.1,
+    latencyMs: 160,
+    status: 'active',
+    description: 'Generates non-blurry intermediate frames for crystal-clear 10% slow-motion action.',
+  },
+  {
+    id: 'esrgan-4k',
+    name: 'Real-ESRGAN Ultra',
+    version: 'v4.0 4K',
+    category: 'generation',
+    specialty: 'Neural 4K Upscaling & Compression Artifact Removal',
+    benchmarkScore: 98.9,
+    latencyMs: 280,
+    status: 'standby',
+    description: 'Reconstructs high-frequency textures and sharpness from low-bitrate phone video.',
+  },
+];
+
+export const DEMO_CAPTIONS: CaptionItem[] = [
+  {
+    id: 'cap_1',
+    text: 'MAKE EVERY FRAME INTELLIGENT',
+    startTime: 0.5,
+    endTime: 3.5,
+    style: 'HORMOZI_BOLD',
+    words: [
+      { word: 'MAKE', start: 0.5, end: 1.1 },
+      { word: 'EVERY', start: 1.1, end: 1.8 },
+      { word: 'FRAME', start: 1.8, end: 2.6 },
+      { word: 'INTELLIGENT', start: 2.6, end: 3.5 },
+    ],
+  },
+  {
+    id: 'cap_2',
+    text: 'WATCH THIS MASSIVE BEAT DROP',
+    startTime: 6.8,
+    endTime: 10.2,
+    style: 'POP_KARAOKE',
+    words: [
+      { word: 'WATCH', start: 6.8, end: 7.4 },
+      { word: 'THIS', start: 7.4, end: 8.0 },
+      { word: 'MASSIVE', start: 8.0, end: 8.8 },
+      { word: 'BEAT', start: 8.8, end: 9.4 },
+      { word: 'DROP', start: 9.4, end: 10.2 },
+    ],
+  },
+];
+
+export const DEMO_REPURPOSE_CARDS: RepurposeCard[] = [
+  {
+    id: 'rep_1',
+    title: 'Drop Impact Viral Hook',
+    platform: 'TikTok',
+    aspectRatio: '9:16',
+    duration: 15,
+    hookRetentionScore: 94,
+    hookSnippet: 'Cut straight to stadium explosion with animated kinetic captions',
+    thumbnailColor: '#ef4444',
+  },
+  {
+    id: 'rep_2',
+    title: 'Cinematic Travel Reel',
+    platform: 'Instagram Reels',
+    aspectRatio: '9:16',
+    duration: 28,
+    hookRetentionScore: 91,
+    hookSnippet: 'Teal/Orange grade with audio-ducked voiceover and slow-motion drift',
+    thumbnailColor: '#0ea5e9',
+  },
+  {
+    id: 'rep_3',
+    title: '60-Second Full Story Breakdown',
+    platform: 'YouTube Shorts',
+    aspectRatio: '9:16',
+    duration: 58,
+    hookRetentionScore: 89,
+    hookSnippet: 'Fast-paced storytelling with word-by-word highlighted captions',
+    thumbnailColor: '#eab308',
+  },
+  {
+    id: 'rep_4',
+    title: 'High-Velocity Promo Teaser',
+    platform: 'X Teaser',
+    aspectRatio: '16:9',
+    duration: 12,
+    hookRetentionScore: 96,
+    hookSnippet: 'Maximum impact 12-second cut with heavy bass and logo reveal',
+    thumbnailColor: '#8b5cf6',
+  },
+];
 
 export const INITIAL_CLIPS: TimelineClip[] = [
   {
@@ -77,7 +230,18 @@ export const INITIAL_CLIPS: TimelineClip[] = [
     effect: 'Anamorphic Flare',
     score: { visual: 97, motion: 95, sharpness: 99, overall: 97 },
   },
-  // Text Overlay Clip
+  // B-Roll Overlay on V2 Track
+  {
+    id: 'clip_broll_1',
+    title: 'AI B-Roll: Neon Rain Reflections',
+    trackId: 'V2',
+    startTime: 7.5,
+    duration: 3.75,
+    color: '#10b981',
+    opacity: 0.9,
+    score: { visual: 99, motion: 96, sharpness: 99, overall: 98 },
+  },
+  // Text Overlay Clip on T1 Track
   {
     id: 'clip_text_1',
     title: 'TITLE: VIZMOTION REEL 2026',
@@ -85,16 +249,6 @@ export const INITIAL_CLIPS: TimelineClip[] = [
     startTime: 0.5,
     duration: 3.0,
     color: '#f59e0b',
-    opacity: 1.0,
-    score: { visual: 100, motion: 100, sharpness: 100, overall: 100 },
-  },
-  {
-    id: 'clip_text_2',
-    title: 'CAPTION: "Drop the bass on beat..."',
-    trackId: 'T1',
-    startTime: 7.5,
-    duration: 3.5,
-    color: '#eab308',
     opacity: 1.0,
     score: { visual: 100, motion: 100, sharpness: 100, overall: 100 },
   },
@@ -117,6 +271,12 @@ export const DEMO_AUDIO: AudioTrack = {
     { time: 13.12, type: 'beat', energy: 0.85 },
     { time: 15.0, type: 'drop', energy: 1.0 },
     { time: 18.75, type: 'buildup', energy: 0.95 },
+  ],
+  stems: [
+    { id: 'vocals', label: 'Vocals (Lead & Backing)', volume: 90, muted: false, color: '#38bdf8' },
+    { id: 'drums', label: 'Drums (Kick & Snare)', volume: 100, muted: false, color: '#f59e0b' },
+    { id: 'bass', label: 'Sub-Bass & 808s', volume: 95, muted: false, color: '#ec4899' },
+    { id: 'instruments', label: 'Synths & Melody', volume: 85, muted: false, color: '#10b981' },
   ],
 };
 

@@ -11,8 +11,12 @@ import {
   AudioTrack,
   ColorGradeSettings,
   ProjectSettings,
+  CaptionPreset,
+  CaptionItem,
+  RepurposeCard,
+  AIModel,
 } from './types';
-import { INITIAL_CLIPS, DEMO_AUDIO, DEFAULT_COLOR_GRADE } from './data/mockData';
+import { INITIAL_CLIPS, DEMO_AUDIO, DEFAULT_COLOR_GRADE, DEMO_CAPTIONS } from './data/mockData';
 import { sounds } from './utils/audioSynth';
 import { StudioHeader } from './components/StudioHeader';
 import { SidebarNav } from './components/SidebarNav';
@@ -22,6 +26,7 @@ import { MultiTrackTimeline } from './components/MultiTrackTimeline';
 import { MediaImportModal } from './components/MediaImportModal';
 import { MakeItFireModal } from './components/MakeItFireModal';
 import { ExportModal } from './components/ExportModal';
+import { AIModelOrchestratorModal } from './components/AIModelOrchestratorModal';
 
 export default function App() {
   // Mode & Navigation states
@@ -34,13 +39,16 @@ export default function App() {
     aspectRatio: '16:9',
     resolution: '1080p',
     fps: 60,
+    activeModelProfile: 'AUTO',
   });
 
-  // Timeline Media states
+  // Timeline Media & Stems states
   const [clips, setClips] = useState<TimelineClip[]>(INITIAL_CLIPS);
   const [audioTrack, setAudioTrack] = useState<AudioTrack>(DEMO_AUDIO);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(INITIAL_CLIPS[0].id);
   const [colorGrade, setColorGrade] = useState<ColorGradeSettings>(DEFAULT_COLOR_GRADE);
+  const [captions, setCaptions] = useState<CaptionItem[]>(DEMO_CAPTIONS);
+  const [activeCaptionStyle, setActiveCaptionStyle] = useState<CaptionPreset>('HORMOZI_BOLD');
 
   // Playback states
   const [isPlaying, setIsPlaying] = useState(false);
@@ -50,7 +58,45 @@ export default function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isMakeItFireOpen, setIsMakeItFireOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isModelOrchestratorOpen, setIsModelOrchestratorOpen] = useState(false);
   const [aiFeedbackToast, setAiFeedbackToast] = useState<string | null>(null);
+
+  // Toggle audio stem mute
+  const handleToggleStemMute = (stemId: string) => {
+    setAudioTrack((prev) => ({
+      ...prev,
+      stems: prev.stems?.map((s) => (s.id === stemId ? { ...s, muted: !s.muted } : s)),
+    }));
+    showToast(`Toggled ${stemId.toUpperCase()} stem state`);
+  };
+
+  // 1-Click Repurpose execution (Section 34 of PRD)
+  const handleSelectRepurpose = (card: RepurposeCard) => {
+    setProjectSettings((prev) => ({ ...prev, aspectRatio: card.aspectRatio }));
+    setClips((prev) =>
+      prev.map((c) => ({
+        ...c,
+        speedRamp: card.platform === 'TikTok' ? 1.3 : 1.1,
+      }))
+    );
+    showToast(`Repurposed for ${card.platform}! Projected Hook Retention: ${card.hookRetentionScore}%`);
+  };
+
+  // Test individual AI model from Orchestrator
+  const handleTestModel = (model: AIModel) => {
+    if (model.category === 'vision') {
+      // SAM-2 background removal
+      setClips((prev) =>
+        prev.map((c, i) => (i === 0 ? { ...c, aiBgRemoved: true, effect: 'SAM-2 Subject Isolated' } : c))
+      );
+      showToast(`${model.name} executed: Subject isolated without greenscreen!`);
+    } else if (model.category === 'audio') {
+      // Whisper / Demucs
+      showToast(`${model.name} executed: Audio stems & subtitles synchronized!`);
+    } else {
+      showToast(`${model.name} executed successfully! (Benchmark: ${model.benchmarkScore}%)`);
+    }
+  };
 
   // Playback timer & audio beat synthesis
   useEffect(() => {
@@ -267,6 +313,7 @@ export default function App() {
         onOpenImport={() => setIsImportModalOpen(true)}
         onOpenMakeItFire={() => setIsMakeItFireOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenModelOrchestrator={() => setIsModelOrchestratorOpen(true)}
         hasUnsavedChanges={false}
       />
 
@@ -318,6 +365,11 @@ export default function App() {
             showToast(`Switched color grade to ${preset}`);
           }}
           onOpenImportModal={() => setIsImportModalOpen(true)}
+          onOpenModelOrchestrator={() => setIsModelOrchestratorOpen(true)}
+          activeCaptionStyle={activeCaptionStyle}
+          onSelectCaptionStyle={setActiveCaptionStyle}
+          onSelectRepurpose={handleSelectRepurpose}
+          onToggleStemMute={handleToggleStemMute}
         />
 
         {/* Center: Video Preview Monitor */}
@@ -331,6 +383,8 @@ export default function App() {
           onTogglePlay={handleTogglePlay}
           aspectRatio={projectSettings.aspectRatio}
           onChangeAspectRatio={(aspectRatio) => setProjectSettings((p) => ({ ...p, aspectRatio }))}
+          captions={captions}
+          activeCaptionStyle={activeCaptionStyle}
         />
 
         {/* Right: Inspector / Properties Panel */}
@@ -378,6 +432,15 @@ export default function App() {
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
         aspectRatio={projectSettings.aspectRatio}
+      />
+
+      {/* AI Model Orchestrator Modal */}
+      <AIModelOrchestratorModal
+        isOpen={isModelOrchestratorOpen}
+        onClose={() => setIsModelOrchestratorOpen(false)}
+        activeProfile={projectSettings.activeModelProfile}
+        onChangeProfile={(profile) => setProjectSettings((p) => ({ ...p, activeModelProfile: profile }))}
+        onTestModel={handleTestModel}
       />
 
     </div>
