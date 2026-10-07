@@ -4,53 +4,55 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { MainTab, WeaponLoadout, RunicGem, GripPommel, EditingStyle, TimelineClip } from './types';
 import {
-  DEFAULT_LOADOUT,
-  BLADES_LOADOUT,
-  INITIAL_STATS,
-  INITIAL_CLIPS,
-  DEMO_AUDIO,
-} from './data/mockData';
+  UserMode,
+  SidebarTab,
+  TimelineClip,
+  AudioTrack,
+  ColorGradeSettings,
+  ProjectSettings,
+} from './types';
+import { INITIAL_CLIPS, DEMO_AUDIO, DEFAULT_COLOR_GRADE } from './data/mockData';
 import { sounds } from './utils/audioSynth';
-import { TopNav } from './components/TopNav';
-import { WeaponSlotTree } from './components/WeaponSlotTree';
-import { NorseSlateCard } from './components/NorseSlateCard';
-import { RightStatsPanel } from './components/RightStatsPanel';
-import { CenterStage } from './components/CenterStage';
-import { TimelineEditor } from './components/TimelineEditor';
-import { BottomControllerBar } from './components/BottomControllerBar';
+import { StudioHeader } from './components/StudioHeader';
+import { SidebarNav } from './components/SidebarNav';
+import { VideoPreviewPlayer } from './components/VideoPreviewPlayer';
+import { InspectorPanel } from './components/InspectorPanel';
+import { MultiTrackTimeline } from './components/MultiTrackTimeline';
+import { MediaImportModal } from './components/MediaImportModal';
 import { MakeItFireModal } from './components/MakeItFireModal';
 import { ExportModal } from './components/ExportModal';
-import { TabPanels } from './components/TabPanels';
 
 export default function App() {
-  // Navigation & View states
-  const [activeTab, setActiveTab] = useState<MainTab>('WEAPONS');
-  const [activeViewMode, setActiveViewMode] = useState<'loadout' | 'video' | 'split'>('loadout');
-  const [showTimelineDrawer, setShowTimelineDrawer] = useState<boolean>(true);
+  // Mode & Navigation states
+  const [userMode, setUserMode] = useState<UserMode>('EDIT');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('media');
 
-  // Loadout & Character Stats
-  const [loadout, setLoadout] = useState<WeaponLoadout>(DEFAULT_LOADOUT);
-  const [selectedSlot, setSelectedSlot] = useState<'weapon' | 'lightRunic' | 'heavyRunic' | 'grip'>('weapon');
-  const [stats, setStats] = useState(INITIAL_STATS);
-  const [hacksilver, setHacksilver] = useState(24500);
-  const [xp, setXp] = useState(18200);
+  // Project Settings
+  const [projectSettings, setProjectSettings] = useState<ProjectSettings>({
+    name: 'Untitled Project - Reel 1',
+    aspectRatio: '16:9',
+    resolution: '1080p',
+    fps: 60,
+  });
 
-  // Timeline & Video Engine states
+  // Timeline Media states
   const [clips, setClips] = useState<TimelineClip[]>(INITIAL_CLIPS);
-  const [audioTrack] = useState(DEMO_AUDIO);
+  const [audioTrack, setAudioTrack] = useState<AudioTrack>(DEMO_AUDIO);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(INITIAL_CLIPS[0].id);
+  const [colorGrade, setColorGrade] = useState<ColorGradeSettings>(DEFAULT_COLOR_GRADE);
+
+  // Playback states
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [currentStyle, setCurrentStyle] = useState<EditingStyle>('CINEMATIC');
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('16:9');
 
   // Modals
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isMakeItFireOpen, setIsMakeItFireOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [aiFeedbackToast, setAiFeedbackToast] = useState<string | null>(null);
 
-  // Playback timer & Web Audio beat pulse integration
+  // Playback timer & audio beat synthesis
   useEffect(() => {
     let timer: number;
     if (isPlaying) {
@@ -77,114 +79,163 @@ export default function App() {
     }
   };
 
-  // Switch between Leviathan Axe and Blades of Chaos
-  const handleSwitchWeapon = () => {
-    if (loadout.category === 'axe') {
-      setLoadout(BLADES_LOADOUT);
-      setCurrentStyle('HYPE');
-      setStats((s) => ({ ...s, strength: 12, runic: 6 }));
-    } else {
-      setLoadout(DEFAULT_LOADOUT);
-      setCurrentStyle('CINEMATIC');
-      setStats((s) => ({ ...s, strength: 6, runic: 0 }));
-    }
-  };
+  // Currently selected clip object
+  const selectedClip = clips.find((c) => c.id === selectedClipId) || null;
 
-  // Upgrade Weapon (Leviathan Axe Level up)
-  const handleUpgradeWeapon = () => {
-    if (hacksilver >= 500) {
-      setHacksilver((prev) => prev - 500);
-      setXp((prev) => prev + 350);
-      setLoadout((prev) => ({
-        ...prev,
-        level: Math.min(5, prev.level + 1),
-        strength: prev.strength + 2,
-      }));
-      setStats((prev) => ({
-        ...prev,
-        level: Math.min(5, prev.level + 1),
-        strength: prev.strength + 2,
-        defense: prev.defense + 1,
-      }));
-    }
-  };
-
-  // Equip Light Runic Gem
-  const handleEquipLightRunic = (gem: RunicGem | null) => {
-    setLoadout((prev) => ({ ...prev, lightRunic: gem }));
-    if (gem) {
-      setStats((prev) => ({
-        ...prev,
-        runic: prev.runic + gem.runic,
-        strength: prev.strength + gem.damage,
-      }));
-    } else {
-      setStats((prev) => ({
-        ...prev,
-        runic: Math.max(0, prev.runic - 3),
-      }));
-    }
-  };
-
-  // Equip Heavy Runic Gem
-  const handleEquipHeavyRunic = (gem: RunicGem | null) => {
-    setLoadout((prev) => ({ ...prev, heavyRunic: gem }));
-    if (gem) {
-      setStats((prev) => ({
-        ...prev,
-        runic: prev.runic + gem.runic,
-        strength: prev.strength + gem.damage,
-      }));
-    } else {
-      setStats((prev) => ({
-        ...prev,
-        runic: Math.max(0, prev.runic - 3),
-      }));
-    }
-  };
-
-  // Equip Pommel / Grip
-  const handleEquipGrip = (grip: GripPommel) => {
-    setLoadout((prev) => ({ ...prev, grip }));
-    setStats((prev) => ({
-      ...prev,
-      defense: prev.defense + 2,
-      luck: prev.luck + 2,
-    }));
-  };
-
-  // MAKE IT FIRE completion handler
-  const handleCompleteMakeItFire = (style: EditingStyle) => {
-    setCurrentStyle(style);
-    setStats((prev) => ({
-      ...prev,
-      level: Math.min(5, prev.level + 1),
-      strength: prev.strength + 3,
-      runic: prev.runic + 4,
-      defense: prev.defense + 2,
-      vitality: prev.vitality + 5,
-      luck: prev.luck + 4,
-      cooldown: prev.cooldown + 3,
-    }));
-    setXp((prev) => prev + 1500);
-
-    // Transform clips with beat-synchronized pacing
+  // Handle clip property updates
+  const handleUpdateClip = (clipId: string, updates: Partial<TimelineClip>) => {
     setClips((prev) =>
-      prev.map((c, i) => ({
-        ...c,
-        score: {
-          visual: Math.min(99, c.score.visual + 4),
-          motion: Math.min(99, c.score.motion + 5),
-          sharpness: Math.min(99, c.score.sharpness + 3),
-          overall: Math.min(99, c.score.overall + 4),
-        },
-        speedRamp: i % 2 === 0 ? 1.4 : 0.8,
-        transition: style === 'HYPE' ? 'Impact Flash' : 'Slow Cinematic Push',
-      }))
+      prev.map((c) => (c.id === clipId ? { ...c, ...updates } : c))
     );
   };
 
-  // Keyboard Navigation & Shortcuts
+  // Split active clip at playhead
+  const handleSplitClip = () => {
+    if (!selectedClipId) return;
+    const clip = clips.find((c) => c.id === selectedClipId);
+    if (!clip || clip.duration <= 0.8) return;
+
+    const half = clip.duration / 2;
+    setClips((prev) =>
+      prev.flatMap((c) =>
+        c.id === selectedClipId
+          ? [
+              { ...c, duration: half },
+              {
+                ...c,
+                id: `clip_${Date.now()}`,
+                title: `${c.title} (Part 2)`,
+                startTime: c.startTime + half,
+                duration: half,
+              },
+            ]
+          : [c]
+      )
+    );
+    showToast(`Split "${clip.title}" at playhead`);
+  };
+
+  // Delete active clip
+  const handleDeleteClip = () => {
+    if (!selectedClipId || clips.length <= 1) return;
+    setClips((prev) => prev.filter((c) => c.id !== selectedClipId));
+    setSelectedClipId(clips[0].id);
+    showToast('Deleted clip from timeline');
+  };
+
+  // Add new clip to timeline
+  const handleAddClip = () => {
+    const newId = `clip_${Date.now()}`;
+    const newClip: TimelineClip = {
+      id: newId,
+      title: `B-Roll Scene ${clips.length + 1}`,
+      trackId: 'V1',
+      startTime: clips.length * 3.75,
+      duration: 3.75,
+      color: '#3b82f6',
+      scale: 1.0,
+      opacity: 1.0,
+      speedRamp: 1.0,
+      transition: 'Cross Dissolve',
+      score: { visual: 96, motion: 94, sharpness: 95, overall: 95 },
+    };
+    setClips((prev) => [...prev, newClip]);
+    setSelectedClipId(newId);
+    showToast('Added new clip to timeline');
+  };
+
+  // Handle media import
+  const handleImportMedia = (newClips: TimelineClip[], newAudio: AudioTrack) => {
+    setClips(newClips);
+    setAudioTrack(newAudio);
+    setSelectedClipId(newClips.length > 0 ? newClips[0].id : null);
+    setCurrentTime(0);
+    showToast(`Imported ${newClips.length} clips & ${newAudio.bpm} BPM soundtrack!`);
+  };
+
+  // AI Command Bar execution engine (Section 5 of PRD)
+  const handleExecuteAICommand = (command: string) => {
+    const cmd = command.toLowerCase();
+
+    if (cmd.includes('beat') || cmd.includes('follow') || cmd.includes('sync')) {
+      // Sync cuts to beat
+      const beatInterval = (60 / audioTrack.bpm) * 4;
+      setClips((prev) =>
+        prev.map((c, i) => ({
+          ...c,
+          startTime: i * beatInterval,
+          duration: beatInterval,
+          transition: 'Flash Impact',
+        }))
+      );
+      showToast(`AI aligned all cuts to ${audioTrack.bpm} BPM downbeats!`);
+    } else if (cmd.includes('tiktok') || cmd.includes('vertical') || cmd.includes('9:16')) {
+      // Convert to TikTok vertical
+      setProjectSettings((prev) => ({ ...prev, aspectRatio: '9:16' }));
+      setClips((prev) =>
+        prev.map((c) => ({
+          ...c,
+          speedRamp: 1.25,
+        }))
+      );
+      showToast('Switched to 9:16 TikTok format & accelerated pacing!');
+    } else if (cmd.includes('cinematic') || cmd.includes('teal') || cmd.includes('color')) {
+      // Cinematic look
+      setColorGrade({
+        exposure: 0,
+        contrast: 25,
+        saturation: 15,
+        temperature: -10,
+        tint: 0,
+        preset: 'Cinematic Teal & Orange',
+      });
+      showToast('Applied Cinematic Teal & Orange grade and letterboxing!');
+    } else if (cmd.includes('speed') || cmd.includes('ramp') || cmd.includes('drop')) {
+      // Speed ramps on drops
+      setClips((prev) =>
+        prev.map((c, i) => ({
+          ...c,
+          speedRamp: i % 2 === 0 ? 1.5 : 0.6,
+          effect: 'RGB Split & Quake',
+        }))
+      );
+      showToast('Generated dynamic speed ramps on musical drops!');
+    } else if (cmd.includes('hook') || cmd.includes('first 3') || cmd.includes('retention')) {
+      // Optimize opening hook
+      setClips((prev) => [
+        {
+          id: `hook_${Date.now()}`,
+          title: 'HIGH-ENERGY OPENING HOOK (3s)',
+          trackId: 'V1',
+          startTime: 0,
+          duration: 3.0,
+          color: '#ef4444',
+          speedRamp: 1.4,
+          transition: 'Whip Pan Right',
+          score: { visual: 99, motion: 99, sharpness: 99, overall: 99 },
+        },
+        ...prev.map((c) => ({ ...c, startTime: c.startTime + 3.0 })),
+      ]);
+      showToast('Injected 3-second high-retention visual hook!');
+    } else {
+      // General creative polish
+      setClips((prev) =>
+        prev.map((c) => ({
+          ...c,
+          transition: 'Cross Dissolve',
+          score: { ...c.score, overall: Math.min(99, c.score.overall + 3) },
+        }))
+      );
+      showToast(`AI Creative Plan applied: "${command}"`);
+    }
+  };
+
+  const showToast = (msg: string) => {
+    setAiFeedbackToast(msg);
+    setTimeout(() => setAiFeedbackToast(null), 4000);
+  };
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -192,206 +243,141 @@ export default function App() {
       if (e.code === 'Space') {
         e.preventDefault();
         handleTogglePlay();
-      } else if (e.key === 'q' || e.key === 'Q') {
-        sounds.playBumper();
-        const tabs: MainTab[] = ['WEAPONS', 'ARMOR', 'SKILLS', 'MAP', 'GOALS', 'CODEX', 'RESOURCES'];
-        const idx = tabs.indexOf(activeTab);
-        setActiveTab(tabs[(idx - 1 + tabs.length) % tabs.length]);
-      } else if (e.key === 'e' || e.key === 'E') {
-        sounds.playBumper();
-        const tabs: MainTab[] = ['WEAPONS', 'ARMOR', 'SKILLS', 'MAP', 'GOALS', 'CODEX', 'RESOURCES'];
-        const idx = tabs.indexOf(activeTab);
-        setActiveTab(tabs[(idx + 1) % tabs.length]);
-      } else if (e.key === 'f' || e.key === 'F') {
-        setIsMakeItFireOpen(true);
-      } else if (e.key === 'x' || e.key === 'X') {
-        setIsExportOpen(true);
+      } else if (e.key === 'c' || e.key === 'C') {
+        handleSplitClip();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        handleDeleteClip();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, isPlaying]);
+  }, [isPlaying, selectedClipId, clips]);
 
   return (
-    <div className="relative w-screen h-screen bg-[#05070a] text-slate-100 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-screen h-screen bg-[#070a0f] text-slate-100 flex flex-col justify-between overflow-hidden font-sans">
       
-      {/* Top God of War Navigation Bar */}
-      <TopNav
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        hacksilver={hacksilver}
-        xp={xp}
-        activeViewMode={activeViewMode}
-        onChangeViewMode={setActiveViewMode}
+      {/* Top Application Header */}
+      <StudioHeader
+        userMode={userMode}
+        onSetUserMode={setUserMode}
+        projectSettings={projectSettings}
+        onChangeProjectName={(name) => setProjectSettings((p) => ({ ...p, name }))}
+        onExecuteAICommand={handleExecuteAICommand}
+        onOpenImport={() => setIsImportModalOpen(true)}
+        onOpenMakeItFire={() => setIsMakeItFireOpen(true)}
+        onOpenExport={() => setIsExportOpen(true)}
+        hasUnsavedChanges={false}
       />
 
-      {/* Main Viewport Content */}
-      <main className="relative flex-1 w-full flex items-center justify-between px-6 py-2 overflow-hidden">
+      {/* Floating AI Feedback Toast */}
+      {aiFeedbackToast && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-slate-900 border border-sky-400/80 text-sky-200 text-xs font-medium shadow-2xl shadow-sky-500/20 flex items-center gap-2 animate-fadeIn">
+          <span className="text-amber-400">⚡</span>
+          <span>{aiFeedbackToast}</span>
+        </div>
+      )}
+
+      {/* Main Workspace Stage */}
+      <div className="relative flex-1 w-full flex overflow-hidden">
         
-        {/* Render Tab Panels for ARMOR, SKILLS, MAP, GOALS, CODEX, RESOURCES */}
-        <TabPanels
-          activeTab={activeTab}
-          currentStyle={currentStyle}
-          onSelectStyle={setCurrentStyle}
-          onOpenMakeItFire={() => setIsMakeItFireOpen(true)}
-          onOpenExport={() => setIsExportOpen(true)}
+        {/* Left: Tools & Media Sidebar */}
+        <SidebarNav
+          activeTab={activeSidebarTab}
+          onSelectTab={setActiveSidebarTab}
+          clips={clips}
+          audioTrack={audioTrack}
+          onAddClipToTimeline={(clip) => {
+            const newClip: TimelineClip = {
+              id: `clip_${Date.now()}`,
+              title: clip.title || 'New Scene',
+              trackId: clip.trackId || 'V1',
+              startTime: currentTime,
+              duration: clip.duration || 3.0,
+              color: clip.color || '#3b82f6',
+              score: { visual: 95, motion: 95, sharpness: 95, overall: 95 },
+            };
+            setClips((prev) => [...prev, newClip]);
+            setSelectedClipId(newClip.id);
+            showToast(`Added "${newClip.title}" to timeline`);
+          }}
+          onApplyEffect={(eff) => {
+            if (selectedClipId) {
+              handleUpdateClip(selectedClipId, { effect: eff });
+              showToast(`Applied ${eff} to active clip`);
+            }
+          }}
+          onApplyTransition={(tr) => {
+            if (selectedClipId) {
+              handleUpdateClip(selectedClipId, { transition: tr });
+              showToast(`Applied ${tr} transition`);
+            }
+          }}
+          onApplyColorPreset={(preset) => {
+            setColorGrade((g) => ({ ...g, preset }));
+            showToast(`Switched color grade to ${preset}`);
+          }}
+          onOpenImportModal={() => setIsImportModalOpen(true)}
         />
 
-        {/* WEAPONS LOADOUT SCREEN (Matches uploaded image exactly) */}
-        {activeTab === 'WEAPONS' && (
-          <div className="relative w-full h-full flex items-center justify-between gap-4">
-            
-            {/* Left Column: Equipment Slot Tree & Slate Card */}
-            <div className="relative z-20 flex items-center gap-4">
-              {/* Vertical Weapon and Runic Socket Tree */}
-              <WeaponSlotTree
-                loadout={loadout}
-                selectedSlot={selectedSlot}
-                onSelectSlot={setSelectedSlot}
-                onSwitchWeapon={handleSwitchWeapon}
-              />
+        {/* Center: Video Preview Monitor */}
+        <VideoPreviewPlayer
+          clips={clips}
+          audioTrack={audioTrack}
+          colorGrade={colorGrade}
+          currentTime={currentTime}
+          onSeek={setCurrentTime}
+          isPlaying={isPlaying}
+          onTogglePlay={handleTogglePlay}
+          aspectRatio={projectSettings.aspectRatio}
+          onChangeAspectRatio={(aspectRatio) => setProjectSettings((p) => ({ ...p, aspectRatio }))}
+        />
 
-              {/* Center-Left Stone Slate Card */}
-              <NorseSlateCard
-                loadout={loadout}
-                selectedSlot={selectedSlot}
-                onEquipLightRunic={handleEquipLightRunic}
-                onEquipHeavyRunic={handleEquipHeavyRunic}
-                onEquipGrip={handleEquipGrip}
-                onUpgradeWeapon={handleUpgradeWeapon}
-              />
-            </div>
+        {/* Right: Inspector / Properties Panel */}
+        <InspectorPanel
+          selectedClip={selectedClip}
+          userMode={userMode}
+          colorGrade={colorGrade}
+          onChangeColorGrade={setColorGrade}
+          onUpdateClip={handleUpdateClip}
+        />
 
-            {/* Center Stage: Character Backdrop (Kratos & Atreus) + Live Video Preview */}
-            <CenterStage
-              viewMode={activeViewMode}
-              clips={clips}
-              audioTrack={audioTrack}
-              isPlaying={isPlaying}
-              onTogglePlay={handleTogglePlay}
-              currentTime={currentTime}
-              onSeek={setCurrentTime}
-              currentStyle={currentStyle}
-              aspectRatio={aspectRatio}
-              onChangeAspectRatio={setAspectRatio}
-              onTriggerMakeItFire={() => setIsMakeItFireOpen(true)}
-            />
+      </div>
 
-            {/* Right Column: Character / Engine Stats Panel */}
-            <div className="relative z-20">
-              <RightStatsPanel stats={stats} />
-            </div>
-
-          </div>
-        )}
-      </main>
-
-      {/* Collapsible Timeline Drawer at bottom of viewport */}
-      {showTimelineDrawer && (
-        <div className="relative z-20 w-full">
-          <div className="flex justify-end px-6 -mb-2">
-            <button
-              onClick={() => setShowTimelineDrawer(!showTimelineDrawer)}
-              className="text-[10px] font-cinzel text-slate-400 hover:text-amber-300 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded cursor-pointer"
-            >
-              COLLAPSE TIMELINE ▼
-            </button>
-          </div>
-          <TimelineEditor
-            clips={clips}
-            audioTrack={audioTrack}
-            currentTime={currentTime}
-            onSeek={setCurrentTime}
-            onSelectClip={(c) => setSelectedClipId(c.id)}
-            selectedClipId={selectedClipId}
-            onAddClip={() => {
-              const newId = `c_${Date.now()}`;
-              setClips((prev) => [
-                ...prev,
-                {
-                  id: newId,
-                  title: `CLIP 0${prev.length + 1} // Action Shot`,
-                  startTime: prev.length * 3.75,
-                  duration: 3.75,
-                  trackIndex: 0,
-                  color: '#0284c7',
-                  score: { visual: 95, motion: 92, sharpness: 94, overall: 94 },
-                  transition: 'Impact Flash',
-                  effect: 'Cold Frost Tint',
-                  speedRamp: 1.0,
-                },
-              ]);
-            }}
-            onSplitClip={() => {
-              if (selectedClipId) {
-                const clip = clips.find((c) => c.id === selectedClipId);
-                if (clip && clip.duration > 1) {
-                  const half = clip.duration / 2;
-                  setClips((prev) =>
-                    prev.flatMap((c) =>
-                      c.id === selectedClipId
-                        ? [
-                            { ...c, duration: half },
-                            {
-                              ...c,
-                              id: `c_${Date.now()}`,
-                              title: `${c.title} (Part 2)`,
-                              startTime: c.startTime + half,
-                              duration: half,
-                            },
-                          ]
-                        : [c]
-                    )
-                  );
-                }
-              }
-            }}
-            onDeleteClip={() => {
-              if (selectedClipId && clips.length > 1) {
-                setClips((prev) => prev.filter((c) => c.id !== selectedClipId));
-                setSelectedClipId(clips[0].id);
-              }
-            }}
-            onTogglePlay={handleTogglePlay}
-            isPlaying={isPlaying}
-          />
-        </div>
-      )}
-
-      {/* If Timeline is hidden, show restore button */}
-      {!showTimelineDrawer && (
-        <div className="absolute bottom-12 right-6 z-30">
-          <button
-            onClick={() => setShowTimelineDrawer(true)}
-            className="px-3 py-1 bg-slate-900/90 hover:bg-slate-800 border border-amber-500/60 rounded text-xs font-cinzel text-amber-300 shadow-lg cursor-pointer"
-          >
-            ▲ EXPAND TIMELINE
-          </button>
-        </div>
-      )}
-
-      {/* Bottom Controller Bar matching God of War */}
-      <BottomControllerBar
-        onTriggerMakeItFire={() => setIsMakeItFireOpen(true)}
-        onTogglePlay={handleTogglePlay}
-        onOpenExport={() => setIsExportOpen(true)}
-        isPlaying={isPlaying}
+      {/* Bottom: Multi-Track Timeline */}
+      <MultiTrackTimeline
+        clips={clips}
+        audioTrack={audioTrack}
+        currentTime={currentTime}
+        onSeek={setCurrentTime}
+        selectedClipId={selectedClipId}
+        onSelectClip={(c) => setSelectedClipId(c.id)}
+        onSplitClip={handleSplitClip}
+        onDeleteClip={handleDeleteClip}
+        onAddClip={handleAddClip}
       />
 
-      {/* MAKE IT FIRE Modal */}
+      {/* Modals */}
+      <MediaImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportMedia={handleImportMedia}
+        currentClipsCount={clips.length}
+      />
+
       <MakeItFireModal
         isOpen={isMakeItFireOpen}
         onClose={() => setIsMakeItFireOpen(false)}
-        onCompleteEdit={handleCompleteMakeItFire}
-        currentStyle={currentStyle}
+        onCompleteEdit={(style) => {
+          handleExecuteAICommand(`Make It Fire ${style}`);
+        }}
+        currentStyle="CINEMATIC"
       />
 
-      {/* Export Modal */}
       <ExportModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
-        aspectRatio={aspectRatio}
+        aspectRatio={projectSettings.aspectRatio}
       />
 
     </div>

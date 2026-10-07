@@ -4,7 +4,7 @@ import { sounds } from '../utils/audioSynth';
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  aspectRatio: '16:9' | '9:16' | '1:1';
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:5';
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -12,7 +12,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   aspectRatio: initialRatio,
 }) => {
-  const [format, setFormat] = useState<'9:16' | '16:9' | '1:1'>(initialRatio);
+  const [format, setFormat] = useState<'9:16' | '16:9' | '1:1' | '4:5'>(initialRatio);
   const [resolution, setResolution] = useState<'1080p' | '4k' | '720p'>('1080p');
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -33,7 +33,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           setIsExporting(false);
           sounds.playEquip();
 
-          // Trigger simulated download of exported MP4 file
+          // Simulated browser file download
           const blob = new Blob(['VIZMOTION_AI_VIDEO_STREAM'], { type: 'video/mp4' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -45,22 +45,27 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           return 100;
         }
       });
-    }, 200);
+    }, 180);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none">
-      <div className="relative w-full max-w-md rounded bg-gradient-to-b from-slate-900 to-slate-950 border border-sky-500/70 p-6 shadow-[0_0_40px_rgba(56,189,248,0.3)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 select-none">
+      <div className="relative w-full max-w-md rounded-xl bg-slate-900 border border-slate-700/80 p-6 shadow-2xl">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-sky-500/40 pb-3">
-          <h3 className="font-cinzel text-base font-black text-sky-200 tracking-wider">
-            EXPORT ENGINE // VIZMOTION AI
-          </h3>
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h3 className="text-base font-bold text-white">
+              Export Video Project
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              High-definition rendering with rights-aware clean export
+            </p>
+          </div>
           <button
             onClick={onClose}
             disabled={isExporting}
-            className="text-slate-400 hover:text-white font-cinzel text-sm cursor-pointer"
+            className="text-slate-400 hover:text-white text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -70,29 +75,30 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           <div className="mt-4 space-y-4">
             {/* Format Preset */}
             <div>
-              <label className="block text-[11px] font-cinzel font-bold text-slate-300 mb-1.5">
-                TARGET PLATFORM & ASPECT RATIO:
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                Target Platform & Aspect Ratio:
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-1.5">
                 {[
-                  { id: '9:16', label: 'SHORTS / REELS', ratio: '9:16' },
-                  { id: '16:9', label: 'YOUTUBE / 4K', ratio: '16:9' },
-                  { id: '1:1', label: 'SQUARE FEED', ratio: '1:1' },
+                  { id: '9:16', label: 'Shorts/TikTok', ratio: '9:16' },
+                  { id: '16:9', label: 'YouTube/4K', ratio: '16:9' },
+                  { id: '1:1', label: 'Square Feed', ratio: '1:1' },
+                  { id: '4:5', label: 'Instagram', ratio: '4:5' },
                 ].map((item) => (
                   <button
                     key={item.id}
                     onClick={() => {
                       sounds.playSelect();
-                      setFormat(item.ratio as '9:16' | '16:9' | '1:1');
+                      setFormat(item.ratio as '9:16' | '16:9' | '1:1' | '4:5');
                     }}
-                    className={`p-2 rounded text-[11px] font-cinzel font-bold text-center cursor-pointer transition-all ${
+                    className={`p-2 rounded-lg text-center cursor-pointer transition-all ${
                       format === item.ratio
-                        ? 'bg-sky-500 text-black border border-sky-300 shadow-[0_0_10px_rgba(56,189,248,0.5)]'
-                        : 'bg-slate-950 border border-slate-700 text-slate-400 hover:text-white'
+                        ? 'bg-sky-500 text-black font-bold shadow-md shadow-sky-500/20'
+                        : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
-                    <div>{item.ratio}</div>
-                    <div className="text-[9px] opacity-80">{item.label}</div>
+                    <div className="text-xs font-mono font-bold">{item.ratio}</div>
+                    <div className="text-[9px] truncate opacity-80">{item.label}</div>
                   </button>
                 ))}
               </div>
@@ -100,14 +106,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
             {/* Resolution */}
             <div>
-              <label className="block text-[11px] font-cinzel font-bold text-slate-300 mb-1.5">
-                OUTPUT RESOLUTION & CODEC:
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                Output Resolution & Quality:
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: '1080p', label: '1080p (FHD)' },
                   { id: '4k', label: '4K (UHD)' },
-                  { id: '720p', label: '720p (FAST)' },
+                  { id: '720p', label: '720p (Fast)' },
                 ].map((res) => (
                   <button
                     key={res.id}
@@ -115,10 +121,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       sounds.playSelect();
                       setResolution(res.id as '1080p' | '4k' | '720p');
                     }}
-                    className={`p-2 rounded text-xs font-mono font-bold text-center cursor-pointer transition-all ${
+                    className={`p-2 rounded-lg text-xs font-medium text-center cursor-pointer transition-all ${
                       resolution === res.id
-                        ? 'bg-amber-500 text-black border border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                        : 'bg-slate-950 border border-slate-700 text-slate-400 hover:text-white'
+                        ? 'bg-amber-500 text-black font-bold shadow-md shadow-amber-500/20'
+                        : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
                     {res.label}
@@ -128,18 +134,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
 
             {/* Quality Specs Guarantee (PRD Section 14: No Watermarks) */}
-            <div className="p-3 bg-slate-950/70 border border-slate-800 rounded text-[11px] space-y-1.5 font-cinzel text-slate-300">
+            <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg text-xs space-y-1.5 text-slate-300">
               <div className="flex justify-between">
-                <span>BITRATE:</span>
-                <span className="font-mono text-emerald-400">HIGH (45 Mbps)</span>
+                <span>Codec:</span>
+                <span className="font-mono text-emerald-400">H.264 / MP4 (High Profile)</span>
               </div>
               <div className="flex justify-between">
-                <span>FRAME RATE:</span>
-                <span className="font-mono text-emerald-400">60 FPS</span>
+                <span>Frame Rate:</span>
+                <span className="font-mono text-emerald-400">60 FPS Smooth</span>
               </div>
               <div className="flex justify-between">
-                <span>WATERMARK POLICY:</span>
-                <span className="font-mono text-emerald-400">CLEAN (NO WATERMARK)</span>
+                <span>Watermark Policy:</span>
+                <span className="font-mono text-emerald-400">Clean (No Watermark)</span>
               </div>
             </div>
 
@@ -147,32 +153,32 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="pt-2 flex items-center justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-cinzel text-slate-400 hover:text-white cursor-pointer"
+                className="px-4 py-2 text-xs text-slate-400 hover:text-white cursor-pointer"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 onClick={handleStartExport}
-                className="px-6 py-2.5 rounded bg-sky-500 hover:bg-sky-400 text-black font-cinzel font-black text-xs tracking-wider shadow-[0_0_15px_rgba(56,189,248,0.5)] cursor-pointer active:scale-95 transition-all"
+                className="px-6 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs tracking-wide shadow-lg shadow-sky-500/20 cursor-pointer active:scale-95 transition-all"
               >
-                EXPORT NOW (MP4)
+                Render & Download MP4
               </button>
             </div>
           </div>
         ) : (
-          <div className="mt-6 py-6 flex flex-col items-center justify-center space-y-4">
+          <div className="mt-6 py-8 flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 rounded-full border-4 border-sky-500/20 border-t-sky-400 animate-spin" />
             <div className="text-center">
-              <p className="font-cinzel text-sm font-bold text-sky-200">
-                ENCODING BEAT-SYNCED MASTER... {progress}%
+              <p className="text-sm font-bold text-sky-200">
+                Rendering Master Video... {progress}%
               </p>
-              <p className="text-[10px] text-slate-400 font-mono mt-1">
-                VALIDATING AUDIO/VIDEO SYNCHRONIZATION (&lt;100ms)
+              <p className="text-[11px] text-slate-400 font-mono mt-1">
+                Validating audio synchronization & sub-frame cuts
               </p>
             </div>
-            <div className="w-full h-2 bg-slate-950 rounded border border-slate-800 overflow-hidden">
+            <div className="w-full h-2 bg-slate-950 rounded-full border border-slate-800 overflow-hidden">
               <div
-                className="h-full bg-sky-400 transition-all duration-200"
+                className="h-full bg-sky-400 transition-all duration-150"
                 style={{ width: `${progress}%` }}
               />
             </div>

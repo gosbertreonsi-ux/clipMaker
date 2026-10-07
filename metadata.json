@@ -1,6 +1,6 @@
 {
   "name": "VIZMOTION AI",
-  "description": "Make every beat visual. AI video creation engine and professional editor with God of War AAA interface.",
+  "description": "AI-native professional video editing platform. Simple on the surface, professional engine underneath.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

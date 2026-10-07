@@ -1,63 +1,45 @@
-export type MainTab = 
-  | 'WEAPONS' 
-  | 'ARMOR' 
-  | 'SKILLS' 
-  | 'MAP' 
-  | 'GOALS' 
-  | 'CODEX' 
-  | 'RESOURCES';
+export type UserMode = 'QUICK' | 'EDIT' | 'PRO';
 
-export interface WeaponLoadout {
-  id: string;
-  name: string;
-  category: 'axe' | 'blades' | 'shield' | 'bow';
-  level: number;
-  strength: number;
-  description: string;
-  lore: string;
-  lightRunic: RunicGem | null;
-  heavyRunic: RunicGem | null;
-  grip: GripPommel | null;
-  videoTrackName: string;
-  currentStyle: string;
-}
-
-export interface RunicGem {
-  id: string;
-  name: string;
-  level: number;
-  type: string;
-  cooldown: number;
-  damage: number;
-  runic: number;
-  description: string;
-  effectName: string;
-}
-
-export interface GripPommel {
-  id: string;
-  name: string;
-  level: number;
-  statBonus: string;
-  perk: string;
-}
+export type SidebarTab =
+  | 'media'
+  | 'audio'
+  | 'text'
+  | 'captions'
+  | 'effects'
+  | 'transitions'
+  | 'filters'
+  | 'color'
+  | 'ai'
+  | 'templates';
 
 export interface TimelineClip {
   id: string;
   title: string;
-  startTime: number;
-  duration: number;
-  trackIndex: number;
+  fileName?: string;
+  videoUrl?: string;
+  trackId: 'V2' | 'V1' | 'T1' | 'A1' | 'A2';
+  startTime: number; // in seconds
+  duration: number; // in seconds
+  sourceOffset?: number;
   color: string;
+  // Video properties
+  scale?: number;
+  opacity?: number;
+  speedRamp?: number;
+  rotation?: number;
+  transition?: string;
+  effect?: string;
+  filter?: string;
+  blendMode?: string;
+  // Audio properties
+  volume?: number;
+  // AI score metadata
   score: {
     visual: number;
     motion: number;
     sharpness: number;
     overall: number;
   };
-  transition?: string;
-  effect?: string;
-  speedRamp?: number;
 }
 
 export interface BeatMarker {
@@ -72,26 +54,23 @@ export interface AudioTrack {
   artist: string;
   bpm: number;
   duration: number;
+  audioUrl?: string;
+  fileName?: string;
   beatMarkers: BeatMarker[];
 }
 
-export interface CharacterStats {
-  level: number;
-  hp: number;
-  maxHp: number;
-  strength: number;
-  runic: number;
-  defense: number;
-  vitality: number;
-  luck: number;
-  cooldown: number;
+export interface ColorGradeSettings {
+  exposure: number;
+  contrast: number;
+  saturation: number;
+  temperature: number;
+  tint: number;
+  preset: string;
 }
 
-export type EditingStyle = 
-  | 'CINEMATIC' 
-  | 'HYPE' 
-  | 'MUSIC VIDEO' 
-  | 'SPORTS' 
-  | 'DARK' 
-  | 'DREAMY' 
-  | 'SOCIAL TREND';
+export interface ProjectSettings {
+  name: string;
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:5';
+  resolution: '1080p' | '4K' | '720p';
+  fps: 30 | 60 | 24;
+}
